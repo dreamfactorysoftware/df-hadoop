@@ -1,6 +1,6 @@
 **This guide is not a strict instruction. You don't have to follow every part of it.**
 
-## DreamFactory Skeleton
+## DreamFactory Hadoop
 
 > **Note:** This repository contains the code needed to create a new connector of the DreamFactory platform. 
 If you want the full DreamFactory platform, visit the 
@@ -14,7 +14,7 @@ To connect it to DF just add the following to the require section of
 [main composer](https://github.com/dreamfactorysoftware/dreamfactory/blob/ce72cc6739979be286f51617050bc9ec9c657f39/composer.json#L30):
 ```
 "require":     {
-    "dreamfactory/df-skeleton":   "~0.1.0"    // instead of skeleton write name of your package
+    "dreamfactory/df-hadoop":   "~0.1.0"    // instead of skeleton write name of your package
 }
 ``` 
 

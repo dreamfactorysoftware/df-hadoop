@@ -18,7 +18,7 @@ class ExampleTest extends TestCase
 
     public function tearDown()
     {
-        Service::whereName('test-skeleton')->delete();
+        Service::whereName('test-hadoop')->delete();
 
         parent::tearDown();
     }

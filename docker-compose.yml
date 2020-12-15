@@ -1,0 +1,70 @@
+version: '3.8'
+services:
+  web:
+    environment:
+      SERVERNAME: dreamfactory.local
+
+      DB_DRIVER: mysql
+      DB_HOST: mysql
+      DB_USERNAME: df_admin
+      DB_PASSWORD: df_admin
+      DB_DATABASE: dreamfactory
+
+      CACHE_DRIVER: redis
+      CACHE_HOST: redis
+      CACHE_DATABASE: 0
+      CACHE_PORT: 6379
+
+      APP_LOG_LEVEL: debug
+      LOG_TO_STDOUT: "true"
+      APP_DEBUG: "true"
+
+      DF_LICENSE_KEY: 6971b66474b9184d1ac958e2416da06f
+
+      ADMIN_EMAIL: admin@example.com
+      ADMIN_PASSWORD: password
+      ADMIN_FIRST_NAME: Admin
+      ADMIN_LAST_NAME: DreamFactory
+      ADMIN_PHONE_NUMBER: +38000000000
+
+    volumes:
+      - df-storage:/opt/dreamfactory/storage
+      - ./:/opt/dev/df-hadoop/
+    image: 116434471183.dkr.ecr.us-east-2.amazonaws.com/dreamfactory-gold:4.3.3
+    ports:
+      - "3000:80"
+    depends_on:
+      - mysql
+      - redis
+
+  mysql:
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: dreamfactory
+      MYSQL_USER: df_admin
+      MYSQL_PASSWORD: df_admin
+    image: mysql:5.7
+
+  redis:
+    image: redis
+
+  hadoop:
+    image: harisekhon/hadoop:${VERSION:-latest}
+    ports:
+      #- 8020:8020  # NamenodeRPC
+      - 8042:8042  # NodeManager WebApp     - http://
+      - 8088:8088  # ResourceManager WebApp - http://
+      #- 9000:9000
+      - 9864:9864
+      - 9870:9870
+      #- 10020:10020 # MapReduce JobHistory
+      - 19888:19888 # MapReduce JobHistory WebApp
+      - 50010:50010
+      - 50020:50020
+      - 50070:50070 # HDFS Web Console      - http://
+      - 50075:50075 # WebHDFS               - webhdfs://
+      - 50090:50090 # Status Page           - http://
+
+volumes:
+  df-storage:
+    driver: local
