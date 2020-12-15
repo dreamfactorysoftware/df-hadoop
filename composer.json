@@ -1,10 +1,10 @@
 {
-  "name":        "dreamfactory/df-skeleton",
-  "description": "DreamFactory(tm) Skeleton Code",
+  "name":        "dreamfactory/df-hadoop",
+  "description": "DreamFactory(tm) Hadoop Connector",
   "homepage":    "https://www.dreamfactory.com/",
   "keywords":    [
     "dreamfactory",
-    "skeleton",
+    "hadoop",
     "connector"
   ],
   "license":     [
@@ -12,28 +12,35 @@
   ],
   "authors":     [
     {
-      "name":  "Yaroslav Mokhurenko",
-      "email": "yaroslavm@softwareplanet.com"
+      "name":  "Volodymyr Polishchuk",
+      "email": "volodymyrpo@softwareplanetgroup.com"
+    },
+    {
+      "name": "DreamFactory Team",
+      "email": "code@dreamfactory.com"
     }
   ],
   "support":     {
     "email":  "dspsupport@dreamfactory.com",
-    "source": "https://github.com/dreamfactorysoftware/df-skeleton",
-    "issues": "https://github.com/dreamfactorysoftware/df-skeleton/issues",
+    "source": "https://github.com/dreamfactorysoftware/df-hadoop",
+    "issues": "https://github.com/dreamfactorysoftware/df-hadoop/issues",
     "wiki":   "https://wiki.dreamfactory.com"
   },
   "minimum-stability": "dev",
   "prefer-stable": true,
   "require":     {
-    "dreamfactory/df-core":   "~0.15.3",
-    "dreamfactory/df-system": "~0.2.2"
+    "dreamfactory/df-core":   "~0.22.1",
+    "dreamfactory/df-system": "~0.4.3",
+    "dreamfactory/df-file": "~0.7.3",
+    "simpleenergy/php-webhdfs": "1.0.7",
+    "ext-json": "*"
   },
   "require-dev": {
     "phpunit/phpunit": "@stable"
   },
   "autoload":    {
     "psr-4": {
-      "DreamFactory\\Core\\Skeleton\\": "src/"
+      "DreamFactory\\Core\\Hadoop\\": "src/"
     }
   },
   "extra":       {
@@ -42,7 +49,7 @@
     },
     "laravel": {
       "providers": [
-        "DreamFactory\\Core\\Skeleton\\ServiceProvider"
+        "DreamFactory\\Core\\Hadoop\\ServiceProvider"
       ]
     }
   }
