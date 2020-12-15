@@ -29,7 +29,7 @@ services:
 
     volumes:
       - df-storage:/opt/dreamfactory/storage
-      - ./:/opt/dev/df-hadoop/
+      - ./../:/opt/dev/
     image: 116434471183.dkr.ecr.us-east-2.amazonaws.com/dreamfactory-gold:4.3.3
     ports:
       - "3000:80"

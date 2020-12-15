@@ -31,7 +31,9 @@
   "require":     {
     "dreamfactory/df-core":   "~0.22.1",
     "dreamfactory/df-system": "~0.4.3",
-    "dreamfactory/df-file": "~0.7.3"
+    "dreamfactory/df-file": "~0.7.3",
+    "simpleenergy/php-webhdfs": "1.0.7",
+    "ext-json": "*"
   },
   "require-dev": {
     "phpunit/phpunit": "@stable"
