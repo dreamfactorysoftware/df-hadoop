@@ -47,7 +47,6 @@ class HDFileSystem extends RemoteFileSystem
     {
         // TODO: Implement listContainers() method.
         Log::error('listContainers - $include_properties = ' . $include_properties);
-        return [];
     }
 
     /**
@@ -94,6 +93,18 @@ class HDFileSystem extends RemoteFileSystem
     {
         // TODO: Implement updateContainerProperties() method.
         Log::error('updateContainerProperties - $container = ' . $container . '; $properties = ' . implode('|', $properties));
+        $newPath = null;
+        if ($properties['path'] && $properties['name']) {
+            $newPath = $this->getPath($properties['path'], $properties['name']);
+        } elseif ($properties['name']) {
+            $newPath = $properties['name'];
+        } elseif ($properties['path']) {
+            $newPath = $properties['path'];
+        }
+        if ($newPath) {
+            $this->webHDFSClient->rename($container, $properties['name']);
+        }
+
     }
 
     /**
@@ -117,21 +128,32 @@ class HDFileSystem extends RemoteFileSystem
     }
 
     /**
-     * {@inheritDoc}
+     * {@inheritdoc}
+     * @param string $container Container
+     * @param string $name Path
+     * @param string $data Content or Properties
+     * @param string $type MimeType
      */
-    public function putBlobData($container, $name, $data = null, $properties = [])
+    public function putBlobData($container, $name, $data = '', $type = '')
     {
-        // TODO: Implement putBlobData() method.
-        Log::error('putBlobData - $container = ' . $container . '; $name = ' . $name . '; $data = ' . $data . '; $properties = ' . implode('|', $properties));
+        Log::error('putBlobData - $container = ' . $container . '; $name = ' . $name . '; $data = ' . $data . '; $type = ' . $type);
+        $path = $this->getPath($container, $name);
+        if (!$data) {
+            $this->webHDFSClient->mkdirs($path);
+        } else {
+            $this->webHDFSClient->createWithData($path, $data, true);
+        }
     }
 
     /**
      * {@inheritDoc}
+     *
      */
-    public function putBlobFromFile($container, $name, $localFileName = null, $properties = [])
+    public function putBlobFromFile($container, $name, $localFileName = null, $mime = '')
     {
-        // TODO: Implement putBlobFromFile() method.
-        Log::error('putBlobFromFile - $container = ' . $container . '; $name = ' . $name . '; $localFileName = ' . $localFileName . '; $properties = ' . implode('|', $properties));
+        Log::error('putBlobFromFile - $container = ' . $container . '; $name = ' . $name . '; $localFileName = ' . $localFileName . '; $mime = ' . $mime);
+        $path = $this->getPath($container, $name);
+        $this->webHDFSClient->create($path, $localFileName);
     }
 
     /**
@@ -181,6 +203,7 @@ class HDFileSystem extends RemoteFileSystem
     public function getBlobAsFile($container, $name, $localFileName = null)
     {
         // TODO: Implement getBlobAsFile() method.
+        // write blob to a local system file
         Log::error('getBlobAsFile');
     }
 
@@ -257,8 +280,9 @@ class HDFileSystem extends RemoteFileSystem
      */
     public function deleteBlob($container, $name, $noCheck = false)
     {
-        // TODO: Implement deleteBlob() method.
-        Log::error('deleteBlob');
+        Log::error('deleteBlob - $container = ' . $container . '; $name = ' . $name . '; $noCheck = ' . $noCheck);
+        $path = $this->getPath($container, $name);
+        $this->webHDFSClient->delete($path, $noCheck);
     }
 
     /**
