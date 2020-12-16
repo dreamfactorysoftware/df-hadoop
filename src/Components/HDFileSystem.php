@@ -203,8 +203,21 @@ class HDFileSystem extends RemoteFileSystem
      */
     public function getBlobProperties($container, $name)
     {
-        // TODO: Implement getBlobProperties() method.
-        Log::error('getBlobProperties');
+        Log::error('getBlobProperties - $container = ' . $container . '; $name = ' . $name);
+
+        $path = $this->getPath($container, $name);
+        $fileStatus = json_decode($this->webHDFSClient->getFileStatus($path));
+
+        if (isset($fileStatus->FileStatus)) {
+            return [
+                'name'           => $name,
+                'content_type'   => null,
+                'content_length' => $fileStatus->FileStatus->length,
+                'last_modified'  => $fileStatus->FileStatus->modificationTime,
+            ];
+        } else {
+            throw new DfException('Failed to list blob metadata: ' . json_encode($fileStatus->RemoteException));
+        }
     }
 
     /**
@@ -221,6 +234,14 @@ class HDFileSystem extends RemoteFileSystem
                 header("Content-Type: text/html");
                 header("Location: $_SERVER[REQUEST_URI]/");
             } else {
+                $disposition =
+                    (isset($params['disposition']) && !empty($params['disposition'])) ? $params['disposition'] : 'inline';
+                header('Content-Disposition: ' . $disposition . '; filename="' . $name . '";');
+                header('Last-Modified: ' . gmdate('D, d M Y H:i:s T', $fileStatus->FileStatus->modificationTime));
+                header('Content-Type: text/plain');
+                header('Content-Length: ' . $fileStatus->FileStatus->length);
+
+
                 $fileLength = $fileStatus->FileStatus->length;
                 $chunk = \Config::get('df.file_chunk_size');
                 for ($offset = 0; $offset < $fileLength; $offset += $chunk) {
