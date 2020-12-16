@@ -3,6 +3,7 @@
 namespace DreamFactory\Core\Hadoop\Components;
 
 
+use DreamFactory\Core\Exceptions\DfException;
 use DreamFactory\Core\File\Components\RemoteFileSystem;
 use Illuminate\Support\Facades\Log;
 use org\apache\hadoop\WebHDFS;
@@ -148,18 +149,30 @@ class HDFileSystem extends RemoteFileSystem
     public function listBlobs($container, $prefix = '', $delimiter = '')
     {
         Log::error('listBlobs - $container = ' . $container . '; $prefix = ' . $prefix . '; $delimiter = ' . $delimiter);
-        $listOfDirectories = $this->webHDFSClient->listDirectories($container, false, true);
-        foreach ($listOfDirectories as $directory) {
-            $directory->pathSuffix .= '/';
+        if ($prefix) {
+            $path = $this->getPath($container, $prefix);
+        } else {
+            $path = $container;
         }
-        $listOfFiles = $this->webHDFSClient->listFiles($container, false, true);
+        $listOfDirectories = $this->webHDFSClient->listDirectories($path, $delimiter === '', true);
+        $listOfFiles = $this->webHDFSClient->listFiles($path, $delimiter === '', true);
         $listOfBlobs = array_merge($listOfDirectories, $listOfFiles);
+        $result = [];
         foreach ($listOfBlobs as $blob) {
-            $blob->name = $blob->pathSuffix;
-            $blob->hadoopType = $blob->type;
+            // Convert to DreamFactory resource type
+            $responseBlob = [];
+            $suffix = $blob->type === 'DIRECTORY' ? '/' : '';
+            $responseBlob['name'] = preg_replace("/^${container}\/?/", '', $blob->path . $suffix, 1);
+            $responseBlob['content_length'] = $blob->length;
+            $responseBlob['last_modified'] = $blob->modificationTime;
+            $responseBlob['content_type'] = null;
+            // Save original HDFS responce
+            $responseBlob['hdfs'] = $blob;
+
+            $result[] = $responseBlob;
         }
 
-        return json_decode(json_encode($listOfBlobs), true);
+        return json_decode(json_encode($result), true);
     }
 
     /**
@@ -176,8 +189,13 @@ class HDFileSystem extends RemoteFileSystem
      */
     public function getBlobData($container, $name)
     {
-        // TODO: Implement getBlobData() method.
-        Log::error('getBlobData');
+        Log::error('getBlobData - $container = ' . $container . '; $name = ' . $name);
+        $path = $this->getPath($container, $name);
+        try {
+            return $this->webHDFSClient->open($path);
+        } catch (\Exception $ex) {
+            throw new DfException('Failed to retrieve blob "' . $name . '": ' . $ex->getMessage());
+        }
     }
 
     /**
@@ -194,10 +212,23 @@ class HDFileSystem extends RemoteFileSystem
      */
     public function streamBlob($container, $name, $params = [])
     {
-        // TODO: Implement streamBlob() method.
         Log::error('streamBlob - $container = ' . $container . '; $name = ' . $name . '; $params = ' . implode($params));
-        $content = $this->webHDFSClient->open($this->getPath($container, $name));
-        echo $content;
+        $path = $this->getPath($container, $name);
+        $fileStatus = json_decode($this->webHDFSClient->getFileStatus($path));
+        if (isset($fileStatus->FileStatus)) {
+            if ($fileStatus->FileStatus->type === 'DIRECTORY') {
+                header("HTTP/1.1 302");
+                header("Content-Type: text/html");
+                header("Location: $_SERVER[REQUEST_URI]/");
+            } else {
+                $fileLength = $fileStatus->FileStatus->length;
+                $chunk = \Config::get('df.file_chunk_size');
+                for ($offset = 0; $offset < $fileLength; $offset += $chunk) {
+                    echo $this->webHDFSClient->open($path, $offset, $chunk);
+                }
+            }
+        }
+
     }
 
     /**

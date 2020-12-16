@@ -51,7 +51,7 @@ services:
   hadoop:
     image: harisekhon/hadoop:${VERSION:-latest}
     ports:
-      #- 8020:8020  # NamenodeRPC
+      - 8020:8020  # NamenodeRPC
       - 8042:8042  # NodeManager WebApp     - http://
       - 8088:8088  # ResourceManager WebApp - http://
       #- 9000:9000
@@ -64,7 +64,10 @@ services:
       - 50070:50070 # HDFS Web Console      - http://
       - 50075:50075 # WebHDFS               - webhdfs://
       - 50090:50090 # Status Page           - http://
+    volumes:
+      - hadoop-storage:/tmp/hadoop-root
 
 volumes:
   df-storage:
     driver: local
+  hadoop-storage:
