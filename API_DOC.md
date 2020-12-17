@@ -7,7 +7,7 @@
 **Query**: 
 - Name: `as_list` <br> 
   Data type: `boolean` <br>
-  Description: Return only a list of the resource identifiers.
+  Description: Return only a list of the resource identifiers. Does not work with `as_access_list`, `zip`
   Output if true:
   ```json
   {
@@ -21,7 +21,7 @@
   ```
 - Name: `as_access_list` <br> 
   Data type: `boolean` <br>
-  Description: Returns a list of the resources for role access designation.
+  Description: Returns a list of the resources for role access designation. Does not work with `as_list`, `zip`
   Output if true:
   ```json
   {
@@ -48,7 +48,7 @@
   Description: List the contents of all sub-folders as well.
 - Name: `zip` <br> 
   Data type: `boolean` <br>
-  Description: Return the content of the path as a zip file.
+  Description: Return the content of the path as a zip file. Does not work with `as_list`, `as_access_list`
 - Name: `search` <br> 
   Data type: `string` <br>
   Description: Search for file or folder by name.

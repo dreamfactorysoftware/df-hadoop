@@ -7,6 +7,7 @@ use DreamFactory\Core\Exceptions\DfException;
 use DreamFactory\Core\File\Components\RemoteFileSystem;
 use Illuminate\Support\Facades\Log;
 use org\apache\hadoop\WebHDFS;
+use org\apache\hadoop\WebHDFS_Exception;
 
 class HDFileSystem extends RemoteFileSystem
 {
@@ -88,23 +89,80 @@ class HDFileSystem extends RemoteFileSystem
 
     /**
      * {@inheritDoc}
+     * @throws DfException
      */
     public function updateContainerProperties($container, $properties = [])
     {
-        // TODO: Implement updateContainerProperties() method.
         Log::error('updateContainerProperties - $container = ' . $container . '; $properties = ' . implode('|', $properties));
-        $newPath = null;
-        if ($properties['path'] && $properties['name']) {
-            $newPath = $this->getPath($properties['path'], $properties['name']);
-        } elseif ($properties['name']) {
-            $newPath = $properties['name'];
-        } elseif ($properties['path']) {
-            $newPath = $properties['path'];
-        }
-        if ($newPath) {
-            $this->webHDFSClient->rename($container, $properties['name']);
-        }
 
+        $container = $this->resolvePathFromUrl($container);
+
+        $paths = explode('/', $container);
+        $name = array_pop($paths);
+        $path = preg_replace("/${name}$/", '', $container);
+
+        foreach ($properties as $key => $value) {
+            switch ($key) {
+                case 'name':
+                    $this->move($path . $name, $path . $value); break;
+                case 'path':
+                    $this->move($container, $value); break;
+                case 'owner':
+                    $this->webHDFSClient->setOwner($container, $value); break;
+                case 'group':
+                    $this->webHDFSClient->setOwner($container, '', $value); break;
+                case 'acl':
+                    $this->webHDFSClient->setAcl($container, $value); break;
+                case 'permission':
+                    $this->webHDFSClient->setPermission($container, $value); break;
+                case 'replication':
+                    $this->webHDFSClient->setReplication($container, $value); break;
+                case 'modificationTime':
+                    $this->webHDFSClient->setTimes($container, $value); break;
+                case 'accessTime':
+                    $this->webHDFSClient->setTimes($container, '', $value); break;
+                case 'content':
+                    try {
+                        $content = $properties['is_base64'] ? base64_decode($value) : $value;
+                        $this->webHDFSClient->createWithData($container, $content, true);
+                    } catch (WebHDFS_Exception $e) {
+                        throw new DfException($e->getMessage(), 400);
+                    }
+                    break;
+                default: {
+                    Log::warning("Unhandled container property [$key] with value [$value]");
+                }
+            }
+        }
+    }
+
+    protected function resolvePathFromUrl($container) {
+        $path = \Request::decodedPath();
+        if ($path[strlen($path) - 1] !== '/' && $container[strlen($container) - 1] === '/') {
+            return substr($container, 0, strlen($container) - 1);
+        }
+        return $container;
+    }
+
+    /**
+     * @param $fromPath
+     * @param $toPath
+     * @throws DfException
+     */
+    protected function move($fromPath, $toPath) {
+        $rs = json_decode($this->webHDFSClient->rename($fromPath, $toPath));
+        if (property_exists($rs, 'RemoteException')) {
+            throw new DfException(
+                "Failed to move ${fromPath} to ${toPath}. Type: " . $rs->RemoteException->exception .
+                    ". Message: " . $rs->RemoteException->message,
+                400
+            );
+        } elseif (property_exists($rs, 'boolean') && $rs->boolean === false) {
+            throw new DfException(
+                "Failed to move ${fromPath} to ${toPath}. Container with name ${fromPath} not exists",
+                404
+            );
+        }
     }
 
     /**
@@ -122,7 +180,8 @@ class HDFileSystem extends RemoteFileSystem
     public function blobExists($container, $name)
     {
         Log::error('blobExists - $container = ' . $container . '; $name = ' . $name);
-        $path = $this->getPath($container, $name);
+        $path = $this->resolvePathFromUrl($this->getPath($container, $name));
+
         $response = json_decode($this->webHDFSClient->getFileStatus($path));
         return isset($response->FileStatus);
     }
@@ -134,8 +193,12 @@ class HDFileSystem extends RemoteFileSystem
      * @param string $data Content or Properties
      * @param string $type MimeType
      */
-    public function putBlobData($container, $name, $data = null, $type = '')
+    public function putBlobData($container, $name, $data = null, $type = null)
     {
+        if ($type === null) {
+            $this->updateContainerProperties($this->getPath($container, $name), json_decode($data, true));
+            return;
+        }
         Log::error('putBlobData - $container = ' . $container . '; $name = ' . $name . '; $data = ' . $data . '; $type = ' . $type);
         $path = $this->getPath($container, $name);
         if (!$data) {
@@ -184,7 +247,8 @@ class HDFileSystem extends RemoteFileSystem
             // Convert to DreamFactory resource type
             $responseBlob = [];
             $suffix = $blob->type === 'DIRECTORY' ? '/' : '';
-            $responseBlob['name'] = preg_replace("/^${container}\/?/", '', $blob->path . $suffix, 1);
+            $encapsulatedContainerPath = preg_quote($container, '/');
+            $responseBlob['name'] = preg_replace("/^${encapsulatedContainerPath}\/?/", '', $blob->path . $suffix, 1);
             $responseBlob['content_length'] = $blob->length;
             $responseBlob['last_modified'] = $blob->modificationTime;
             $responseBlob['content_type'] = null;
