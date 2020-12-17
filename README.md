@@ -15,3 +15,7 @@
 ```
 
 4. Run composer upgrade: `composer upgrade`
+
+### API Doc
+
+[API Doc](API_DOC.md)
