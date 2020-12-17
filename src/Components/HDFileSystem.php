@@ -134,7 +134,7 @@ class HDFileSystem extends RemoteFileSystem
      * @param string $data Content or Properties
      * @param string $type MimeType
      */
-    public function putBlobData($container, $name, $data = '', $type = '')
+    public function putBlobData($container, $name, $data = null, $type = '')
     {
         Log::error('putBlobData - $container = ' . $container . '; $name = ' . $name . '; $data = ' . $data . '; $type = ' . $type);
         $path = $this->getPath($container, $name);
@@ -193,8 +193,8 @@ class HDFileSystem extends RemoteFileSystem
 
             $result[] = $responseBlob;
         }
-
-        return json_decode(json_encode($result), true);
+        $sortedBlobList = $this->sortBlobListByDepth($result, false);
+        return json_decode(json_encode($sortedBlobList), true);
     }
 
     /**
@@ -298,5 +298,24 @@ class HDFileSystem extends RemoteFileSystem
             $path = $container . '/' . $name;
         }
         return $path;
+    }
+
+    /**
+     * Compare Blob by number of slashes in name
+     *
+     * @param array $blobs which contains blobs
+     * @param boolean $asc define the order (true - asc, first with fewer slashes; false - desc, first with more slashes)
+     * @param string $field which use as blob path
+     * @return array
+     */
+    protected function sortBlobListByDepth($blobs = [], $asc = true, $field = 'name') {
+        usort($blobs, function ($a, $b) use ($asc, $field) {
+            $result = preg_match_all('/\/[^\/]+/', $a[$field]) - preg_match_all('/\/[^\/]+/', $b[$field]);
+            if ($result === 0) {
+                $result = strcmp($a[$field], $b[$field]);
+            }
+            return $asc ? $result : $result * -1;
+        });
+        return $blobs;
     }
 }
