@@ -1,3 +1,20 @@
+## Table of content
+
+- [List the resources (folders and files) available in this storage](#list-the-resources-folders-and-files-available-in-this-storage)
+- [Create folder](#create-folder)
+- [Create file](#create-file)
+- [Upload file from URL](#upload-file-from-url)
+- [Upload ZIP archive from URL and extract it](#upload-zip-archive-from-url-and-extract-it)
+- [Update root container properties](#update-root-container-properties)
+- [Update file/directory properties](#update-filedirectory-properties)
+- [Update file content](#update-file-content)
+- [Delete directories/files](#delete-directoriesfiles)
+- [Delete file](#delete-file)
+- [Delete directory](#delete-directory)
+- [Download file content](#download-file-content)
+- [Retrieve file parameters](#retrieve-file-parameters)
+- [Retrieve directory parameters](#retrieve-directory-parameters)
+
 ## List the resources (folders and files) available in this storage
 
 **Endpoint**: `api/v2/<hadoop-service>/`
@@ -323,14 +340,17 @@
 
 ## Create folder
 
-**Endpoint**: `api/v2/<hadoop-service>/`
+**Endpoint**: `api/v2/<hadoop-service>/` or `api/v2/<hadoop-service>/<folder-path>` 
 
 **Method**: `POST` 
  
 **Headers**
 - Name: `X-Folder-Name` <br>
   Date type: `string` <br>
-  Description: Folder name to create with full path. Parent folder should exists.
+  Description: Folder name to create with full path. Parent folder should exists. 
+  If a `folder-path` is present, they will be joined in one path. 
+  For example, `folder-path` is empty and `X-Folder-Name` is 'folder1'. The result path will be '/folder1'. 
+  `folder-path` is 'folder1' and `X-Folder-Name` is 'folder2'. The result path will be '/folder1/folder2'.
 
 **Output**:
 ```json
@@ -373,7 +393,7 @@ File content
 }
 ``` 
 
-## Upload file from URL to root container
+## Upload file from URL
 
 **Endpoint**: `api/v2/<hadoop-service>/`
 
@@ -393,6 +413,9 @@ File content
 }
 ``` 
 
+`filename` parameter is optional. If not defined, DreamFactory will use file name from URL.
+`filename` can full file path. But all parent directories must exist.
+
 **Output**:
 ```json
 {
@@ -401,10 +424,10 @@ File content
   "type": "created file type"
 }
 ```
- 
-## Upload ZIP archive from URL to root container and extract it
 
-**Endpoint**: `api/v2/<hadoop-service>/`
+## Upload ZIP archive from URL and extract it
+
+**Endpoints**: `api/v2/<hadoop-service>/` or `api/v2/<hadoop-service>/<file-path>`
 
 **Method**: `POST` 
 
@@ -429,3 +452,195 @@ File content
   "filename": "new file name"
 }
 ``` 
+
+_Warning. The payload variable `filename` variable will be replaced by path `file-path` variable is they both exist._ 
+
+## Update root container properties
+
+_Warning. All changes will be applied to the container specified in the service configurations. 
+Changes to the container may result in loss of access to it._
+
+**Endpoint**: `api/v2/<hadoop-service>/`
+
+**Method**: `PATCH`
+
+**Payload type**: `JSON`
+
+**Payload parameters**:
+
+- `name` - change directory name. Does not work with the `path` parameter.
+- `path` - change directory path. Must be the absolute way. All parent directories must exist. Does not work with the `name` parameter.
+- `owner` - set directory owner 
+- `group` - set directory group
+- `acl` - set directory ACL. [Apache Hadoop HDFS Access Control Lists](https://hadoop.apache.org/docs/r2.7.1/hadoop-project-dist/hadoop-hdfs/HdfsPermissionsGuide.html#ACLs_Access_Control_Lists) 
+- `permission` - set directory permission 
+- `replication` - set directory replication
+- `modificationTime` - set directory modification time
+- `accessTime` - set directory access time
+
+**Payload example**:
+```json
+{
+  "name": "root-dir",
+  "owner": "root",
+  "group": "supergroup"
+}
+``` 
+
+## Update file/directory properties
+
+**Endpoint**: `api/v2/<hadoop-service>/<file-or-directory-path>`
+
+**Method**: `PATCH`
+
+**Payload type**: `JSON`
+
+**Payload parameters**:
+
+- `name` - change directory name. Does not work with the `path` parameter.
+- `path` - change directory path. Must be the absolute way. All parent directories must exist. Does not work with the `name` parameter.
+- `owner` - set directory owner 
+- `group` - set directory group
+- `acl` - set directory ACL. [Apache Hadoop HDFS Access Control Lists](https://hadoop.apache.org/docs/r2.7.1/hadoop-project-dist/hadoop-hdfs/HdfsPermissionsGuide.html#ACLs_Access_Control_Lists) 
+- `permission` - set directory permission 
+- `replication` - set directory replication
+- `modificationTime` - set directory modification time
+- `accessTime` - set directory access time
+- `content` - new content of file
+- `is_base64` - works only with `content`. Automatically decodes content from base64 when writing.
+
+**Payload example**:
+```json
+{
+  "content": "RHJlYW1GYWN0b3J5IGlzIGF3ZXNvbWUK",
+  "is_base64": true
+}
+``` 
+
+## Update file content
+
+**Endpoint**: `api/v2/<hadoop-service>/<file-path>`
+
+**Method**: `PUT`
+
+**Payload type**: `raw`
+
+Payload must contain the new content of the file. If the payload is empty, the file will be cleared.
+
+
+
+## Delete directories/files
+
+**Endpoint**: `api/v2/<hadoop-service>/`
+
+**Method**: `DELETE`
+
+**Query**: 
+- Name: `force` <br> 
+  Data type: `boolean` <br>
+  Description: Set to true to force delete on a non-empty folder.
+
+**Payload type**: `JSON`
+
+**Payload parameters**:
+
+- `resource` (array) 
+    - `name` - (optional) file/directory name. DreamFactory will use root directory as path. Does not work with `path`
+    - `path` - (optional) absolute file/directory path. It will overwrite `name` parameter
+    - `type` - (required) resource type. `folder` or `file`
+    
+**Payload example**:
+```json
+{
+  "resource": [
+    {
+      "name": "file.txt",
+      "type": "file"
+    },
+    {
+      "name": "directory1",
+      "type": "folder"
+    },
+    {
+      "path": "/directory1/subdirectory1/directory1",
+      "type": "folder"
+    },
+    {
+      "path": "/directory1/subdirectory1/file1.txt",
+      "type": "file"
+    }
+  ]
+}
+```
+
+## Delete file
+
+**Endpoint**: `api/v2/<hadoop-service>/<file-path>`
+
+**Method**: `DELETE`
+
+## Delete directory
+
+**Endpoint**: `api/v2/<hadoop-service>/<file-path>`
+
+**Method**: `DELETE`
+
+**Query**: 
+- Name: `force` <br> 
+  Data type: `boolean` <br>
+  Description: Set to true to force delete on a non-empty folder.
+
+## Download file content
+
+**Endpoint**: `api/v2/<hadoop-service>/<file-path>`
+
+**Method**: `GET`
+
+**Query**: 
+- Name: `download` <br> 
+  Data type: `boolean` <br>
+  Description: Prompt the user to download the file from the browser.
+
+## Retrieve file parameters
+
+**Endpoint**: `api/v2/<hadoop-service>/<file-path>`
+
+**Method**: `GET`
+
+**Query**: 
+- Name: `include_properties` <br> 
+  Data type: `boolean` <br>
+  Value: `true` <br>
+  Description: Only show file properties.
+- Name: `content` <br> 
+  Data type: `boolean` <br>
+  Description: Show content (base64 encoded) when displaying file properties.
+- Name: `is_base64` <br> 
+  Data type: `boolean` <br>
+  Description: Set this to false to show file content in plain text. Otherwise shown in base64 encoded.
+
+## Retrieve directory parameters
+
+**Endpoint**: `api/v2/<hadoop-service>/<directory-path>`
+
+**Method**: `GET`
+
+**Query**: 
+- Name: `include_properties` <br> 
+  Data type: `boolean` <br>
+  Description: Return any properties of the folder in the response.
+- Name: `include_folders` <br> 
+  Data type: `boolean` <br>
+  Description: Include folders in the returned listing. Default is true.
+- Name: `include_files` <br> 
+  Data type: `boolean` <br>
+  Description: Include files in the returned listing. Default is true.
+- Name: `full_tree` <br> 
+  Data type: `boolean` <br>
+  Description: List the contents of all sub-folders as well.
+- Name: `zip` <br> 
+  Data type: `boolean` <br>
+  Description: Return the content of the folder as a zip file.
+- Name: `search` <br> 
+  Data type: `string` <br>
+  Description: Search for file or folder by name.
