@@ -50,7 +50,6 @@ class HDFileSystem extends RemoteFileSystem
      */
     public function listContainers($include_properties = false)
     {
-        Log::error('listContainers - $include_properties = ' . $include_properties);
         $this->webHDFSClient->getHomeDirectory();
         return $this->listBlobs('/', '', '/');
     }
@@ -60,7 +59,6 @@ class HDFileSystem extends RemoteFileSystem
      */
     public function containerExists($container)
     {
-        Log::error('containerExists - $container = ' . $container);
         $response = json_decode($this->webHDFSClient->getFileStatus($container));
         return !isset($response->RemoteException);
     }
@@ -71,7 +69,6 @@ class HDFileSystem extends RemoteFileSystem
      */
     public function getContainer($container, $include_files = true, $include_folders = true, $full_tree = false)
     {
-        Log::error('getContainer - $container = ' . $container . '; $include_files = ' . $include_files . '; $include_folders = ' . $include_folders . '; $full_tree = ' . $full_tree);
         if ($this->containerExists($container)) {
             return $this->getFolder($container, '', $include_files, $include_folders, $full_tree);
         }
@@ -84,7 +81,6 @@ class HDFileSystem extends RemoteFileSystem
      */
     public function getContainerProperties($container)
     {
-        Log::error('getContainerProperties - $container = ' . $container);
         $path = HDFSFileBlobTools::getPath($container);
         $fileStatus = json_decode($this->webHDFSClient->getFileStatus($path));
 
@@ -108,8 +104,6 @@ class HDFileSystem extends RemoteFileSystem
      */
     public function createContainer($container, $check_exist = false)
     {
-        Log::error('createContainer - $container = ' . $container . '; $check_exist = ' . $check_exist);
-
         if (gettype($container) === 'string') {
             $path = $container;
         } else {
@@ -131,8 +125,6 @@ class HDFileSystem extends RemoteFileSystem
      */
     public function updateContainerProperties($container, $properties = [])
     {
-        Log::error('updateContainerProperties - $container = ' . $container . '; $properties = ' . implode('|', $properties));
-
         $container = HDFSFileBlobTools::resolvePathFromUrl($container);
 
         $paths = explode('/', $container);
@@ -180,7 +172,6 @@ class HDFileSystem extends RemoteFileSystem
      */
     public function deleteContainer($container, $force = false)
     {
-        Log::error('deleteContainer - $container = ' . $container . '; $force = ' . $force);
         $this->deleteBlob($container, null, $force);
     }
 
@@ -189,7 +180,6 @@ class HDFileSystem extends RemoteFileSystem
      */
     public function blobExists($container, $name)
     {
-        Log::error('blobExists - $container = ' . $container . '; $name = ' . $name);
         $path = HDFSFileBlobTools::resolvePathFromUrl(HDFSFileBlobTools::getPath($container, $name));
 
         $response = json_decode($this->webHDFSClient->getFileStatus($path));
@@ -209,7 +199,6 @@ class HDFileSystem extends RemoteFileSystem
             $this->updateContainerProperties(HDFSFileBlobTools::getPath($container, $name), json_decode($data, true));
             return;
         }
-        Log::error('putBlobData - $container = ' . $container . '; $name = ' . $name . '; $data = ' . $data . '; $type = ' . $type);
         $path = HDFSFileBlobTools::getPath($container, $name);
         if (!$data) {
             $this->webHDFSClient->mkdirs($path);
@@ -224,7 +213,6 @@ class HDFileSystem extends RemoteFileSystem
      */
     public function putBlobFromFile($container, $name, $localFileName = null, $mime = '')
     {
-        Log::error('putBlobFromFile - $container = ' . $container . '; $name = ' . $name . '; $localFileName = ' . $localFileName . '; $mime = ' . $mime);
         $path = HDFSFileBlobTools::getPath($container, $name);
         $this->webHDFSClient->create($path, $localFileName);
     }
@@ -234,7 +222,6 @@ class HDFileSystem extends RemoteFileSystem
      */
     public function copyBlob($container, $name, $src_container, $src_name, $properties = [])
     {
-        Log::error('copyBlob - $container = ' . $container . '; $name = ' . $name . '; $src_container = ' . $src_container . '; $src_name = ' . $src_name . '; $properties = ' . implode('|', $properties));
         $content = $this->getBlobData($container, $name);
         $this->putBlobData($container, $name, $content, 'text/plain');
     }
@@ -244,7 +231,6 @@ class HDFileSystem extends RemoteFileSystem
      */
     public function listBlobs($container, $prefix = '', $delimiter = '')
     {
-        Log::error('listBlobs - $container = ' . $container . '; $prefix = ' . $prefix . '; $delimiter = ' . $delimiter);
         if ($prefix) {
             $path = HDFSFileBlobTools::getPath($container, $prefix);
         } else {
@@ -277,7 +263,6 @@ class HDFileSystem extends RemoteFileSystem
      */
     public function getBlobAsFile($container, $name, $localFileName = null)
     {
-        Log::error('getBlobAsFile');
         $content = $this->getBlobData($container, $name);
         file_put_contents($localFileName, $content);
     }
@@ -287,7 +272,6 @@ class HDFileSystem extends RemoteFileSystem
      */
     public function getBlobData($container, $name)
     {
-        Log::error('getBlobData - $container = ' . $container . '; $name = ' . $name);
         $path = HDFSFileBlobTools::getPath($container, $name);
         try {
             return $this->webHDFSClient->open($path);
@@ -301,8 +285,6 @@ class HDFileSystem extends RemoteFileSystem
      */
     public function getBlobProperties($container, $name)
     {
-        Log::error('getBlobProperties - $container = ' . $container . '; $name = ' . $name);
-
         $path = HDFSFileBlobTools::getPath($container, $name);
         $fileStatus = json_decode($this->webHDFSClient->getFileStatus($path));
 
@@ -323,7 +305,6 @@ class HDFileSystem extends RemoteFileSystem
      */
     public function streamBlob($container, $name, $params = [])
     {
-        Log::error('streamBlob - $container = ' . $container . '; $name = ' . $name . '; $params = ' . implode($params));
         $path = HDFSFileBlobTools::getPath($container, $name);
         $fileStatus = json_decode($this->webHDFSClient->getFileStatus($path));
         if (isset($fileStatus->FileStatus)) {
@@ -355,7 +336,6 @@ class HDFileSystem extends RemoteFileSystem
      */
     public function deleteBlob($container, $name = '', $noCheck = false)
     {
-        Log::error('deleteBlob - $container = ' . $container . '; $name = ' . $name . '; $noCheck = ' . $noCheck);
         $path = HDFSFileBlobTools::getPath($container, $name);
         $this->webHDFSClient->delete($path, $noCheck);
     }
