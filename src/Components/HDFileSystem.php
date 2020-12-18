@@ -80,20 +80,49 @@ class HDFileSystem extends RemoteFileSystem
 
     /**
      * {@inheritDoc}
+     * @throws DfException
      */
     public function getContainerProperties($container)
     {
-        // TODO: Implement getContainerProperties() method.
         Log::error('getContainerProperties - $container = ' . $container);
+        $path = HDFSFileBlobTools::getPath($container);
+        $fileStatus = json_decode($this->webHDFSClient->getFileStatus($path));
+
+        if (isset($fileStatus->FileStatus)) {
+            return [
+                'name'           => $container,
+                'content_type'   => null,
+                'content_length' => null,
+                'last_modified'  => $fileStatus->FileStatus->modificationTime,
+                'hdfs'           => $fileStatus->FileStatus,
+            ];
+        } else {
+            throw new DfException('Failed to list container metadata: ' . json_encode($fileStatus->RemoteException));
+        }
     }
 
     /**
      * {@inheritDoc}
+     * @param array|string $container
+     * @throws DfException
      */
     public function createContainer($container, $check_exist = false)
     {
-        // TODO: Implement createContainer() method.
         Log::error('createContainer - $container = ' . $container . '; $check_exist = ' . $check_exist);
+
+        if (gettype($container) === 'string') {
+            $path = $container;
+        } else {
+            $path = $container['name'];
+        }
+
+        if ($check_exist) {
+            $fileStatus = json_decode($this->webHDFSClient->getFileStatus($path));
+            if (property_exists($fileStatus, 'FileStatus')) {
+                throw new DfException('Fail to create container. Container already exists', 400);
+            }
+        }
+        return json_decode($this->webHDFSClient->mkdirs($container));
     }
 
     /**
@@ -205,8 +234,9 @@ class HDFileSystem extends RemoteFileSystem
      */
     public function copyBlob($container, $name, $src_container, $src_name, $properties = [])
     {
-        // TODO: Implement copyBlob() method.
         Log::error('copyBlob - $container = ' . $container . '; $name = ' . $name . '; $src_container = ' . $src_container . '; $src_name = ' . $src_name . '; $properties = ' . implode('|', $properties));
+        $content = $this->getBlobData($container, $name);
+        $this->putBlobData($container, $name, $content, 'text/plain');
     }
 
     /**
@@ -247,9 +277,9 @@ class HDFileSystem extends RemoteFileSystem
      */
     public function getBlobAsFile($container, $name, $localFileName = null)
     {
-        // TODO: Implement getBlobAsFile() method.
-        // write blob to a local system file
         Log::error('getBlobAsFile');
+        $content = $this->getBlobData($container, $name);
+        file_put_contents($localFileName, $content);
     }
 
     /**

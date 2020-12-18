@@ -32,7 +32,7 @@ class HDFSFileBlobTools
      * @param $name
      * @return string
      */
-    public static function getPath($container, $name)
+    public static function getPath($container, $name = '')
     {
         if (empty($name)) {
             return $container;
