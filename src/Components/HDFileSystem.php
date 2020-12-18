@@ -195,13 +195,11 @@ class HDFileSystem extends RemoteFileSystem
      */
     public function putBlobData($container, $name, $data = null, $type = null)
     {
-        if ($type === null) {
-            $this->updateContainerProperties(HDFSFileBlobTools::getPath($container, $name), json_decode($data, true));
-            return;
-        }
         $path = HDFSFileBlobTools::getPath($container, $name);
-        if (!$data) {
+        if (($data === null || $data === '') && $type === null) {
             $this->webHDFSClient->mkdirs($path);
+        } elseif ($type === null && gettype(json_decode($data, true)) === 'array') {
+            $this->updateContainerProperties(HDFSFileBlobTools::getPath($container, $name), json_decode($data, true));
         } else {
             $this->webHDFSClient->createWithData($path, $data, true);
         }
