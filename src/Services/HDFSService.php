@@ -23,12 +23,4 @@ class HDFSService extends RemoteFileService
         $this->driver = new HDFileSystem($config);
     }
 
-    protected function getApiDocSchemas()
-    {
-        $apiDocSchemas = parent::getApiDocSchemas();
-        \Log::error(json_encode($apiDocSchemas));
-        return $apiDocSchemas;
-    }
-
-
 }

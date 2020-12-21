@@ -35,6 +35,7 @@ class HDFileSystem extends RemoteFileSystem
             $config['namenode_rpc_port'],
             config('app.debug')
         );
+        $this->webHDFSClient->useSsl($config['use_ssl']);
     }
 
     /**
