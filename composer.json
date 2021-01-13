@@ -33,7 +33,11 @@
     "dreamfactory/df-system": "~0.4.3",
     "dreamfactory/df-file": "~0.7.3",
     "dreamfactory/php-webhdfs": "1.1.0",
-    "ext-json": "*"
+    "dreamfactory/df-database": "~0.11.3",
+    "dreamfactory/df-sqldb": "~0.17.3",
+    "ext-json": "*",
+    "ext-pdo": "*",
+    "ext-odbc": "*"
   },
   "require-dev": {
     "phpunit/phpunit": "@stable"

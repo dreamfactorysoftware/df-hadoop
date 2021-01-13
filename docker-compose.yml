@@ -27,6 +27,8 @@ services:
       ADMIN_LAST_NAME: DreamFactory
       ADMIN_PHONE_NUMBER: +1000000000
 
+      APP_KEY: base64:ytnyqSYq/WiIOIjoy8iPLFfO9lulM7R0cUZSCxe9TtI=
+
     volumes:
       - df-storage:/opt/dreamfactory/storage
 #      - ./../:/opt/dev/
@@ -48,26 +50,54 @@ services:
   redis:
     image: redis
 
-  hadoop:
-    image: harisekhon/hadoop:${VERSION:-latest}
-    ports:
-      - 8020:8020  # NamenodeRPC
-      - 8042:8042  # NodeManager WebApp     - http://
-      - 8088:8088  # ResourceManager WebApp - http://
-      #- 9000:9000
-      - 9864:9864
-      - 9870:9870
-      #- 10020:10020 # MapReduce JobHistory
-      - 19888:19888 # MapReduce JobHistory WebApp
-      - 50010:50010
-      - 50020:50020
-      - 50070:50070 # HDFS Web Console      - http://
-      - 50075:50075 # WebHDFS               - webhdfs://
-      - 50090:50090 # Status Page           - http://
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop2.7.4-java8
     volumes:
-      - hadoop-storage:/tmp/hadoop-root
+      - namenode:/hadoop/dfs/name
+    environment:
+      - CLUSTER_NAME=test
+    env_file:
+      - ./hadoop-hive.env
+    ports:
+      - "50070:50070"
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop2.7.4-java8
+    volumes:
+      - datanode:/hadoop/dfs/data
+    env_file:
+      - ./hadoop-hive.env
+    environment:
+      SERVICE_PRECONDITION: "namenode:50070"
+    ports:
+      - "50075:50075"
+  hive-server:
+    image: bde2020/hive:2.3.2-postgresql-metastore
+    env_file:
+      - ./hadoop-hive.env
+    environment:
+      HIVE_CORE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://hive-metastore/metastore"
+      SERVICE_PRECONDITION: "hive-metastore:9083"
+    ports:
+      - "10000:10000"
+  hive-metastore:
+    image: bde2020/hive:2.3.2-postgresql-metastore
+    env_file:
+      - ./hadoop-hive.env
+    command: /opt/hive/bin/hive --service metastore
+    environment:
+      SERVICE_PRECONDITION: "namenode:50070 datanode:50075 hive-metastore-postgresql:5432"
+    ports:
+      - "9083:9083"
+  hive-metastore-postgresql:
+    image: bde2020/hive-metastore-postgresql:2.3.0
+  presto-coordinator:
+    image: shawnzhu/prestodb:0.181
+    ports:
+      - "8080:8080"
 
 volumes:
   df-storage:
     driver: local
   hadoop-storage:
+  namenode:
+  datanode:
