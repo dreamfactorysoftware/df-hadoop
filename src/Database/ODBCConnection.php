@@ -3,16 +3,13 @@
 namespace DreamFactory\Core\Hadoop\Database;
 
 use Illuminate\Database\Connection;
+use Illuminate\Database\Query\Grammars\MySqlGrammar;
 
 class ODBCConnection extends Connection
 {
     function getDefaultQueryGrammar()
     {
-        $queryGrammar = $this->getConfig('options.grammar.query');
-        if ($queryGrammar) {
-            return new $queryGrammar;
-        }
-        return $queryGrammar ?? parent::getDefaultQueryGrammar();
+        return new MySqlGrammar();
     }
 
     function getDefaultSchemaGrammar()
