@@ -9,6 +9,8 @@ class ODBCPdoStatement extends PDOStatement
     protected $query;
     protected $params = [];
     protected $statement;
+    protected $driverIssue = false;
+    protected $connection;
 
     public function __construct($conn, $query)
     {
@@ -17,8 +19,12 @@ class ODBCPdoStatement extends PDOStatement
         $this->query = preg_replace('/(?<=\s|^):[^\s:]++/um', '?', $query);
 
         $this->params = $this->getParamsFromQuery($query);
-
-        $this->statement = odbc_prepare($conn, $this->query);
+        if (preg_match('/\?[^;]+?OFFSET/im', $query)) {
+            $this->driverIssue = true;
+            $this->connection = $conn;
+        } else {
+            $this->statement = odbc_prepare($conn, $this->query);
+        }
     }
 
     protected function getParamsFromQuery($qry)
@@ -49,8 +55,17 @@ class ODBCPdoStatement extends PDOStatement
 
     public function execute($ignore = null)
     {
-        odbc_execute($this->statement, $this->params);
-        $this->params = [];
+        if ($this->driverIssue) {
+            $q = $this->query;
+            foreach ($this->params as $param) {
+                $q = preg_replace('/\?/', $this->quote($param), $q);
+            }
+            $this->statement = odbc_prepare($this->connection, $q);
+            odbc_execute($this->statement, []);
+        } else {
+            odbc_execute($this->statement, $this->params);
+            $this->params = [];
+        }
     }
 
     public function fetchAll($how = NULL, $class_name = NULL, $ctor_args = NULL)
@@ -65,5 +80,15 @@ class ODBCPdoStatement extends PDOStatement
     public function fetch($option = null, $ignore = null, $ignore2 = null)
     {
         return odbc_fetch_array($this->statement);
+    }
+
+    private function quote($param)
+    {
+        if (gettype($param) === 'string') {
+            $r = preg_replace('/(\\\)/', "\\\\$1", $param);
+            $r = preg_replace('/(")/', "\\\\$1", $r);
+            return "\"${r}\"";
+        }
+        return $param;
     }
 }
