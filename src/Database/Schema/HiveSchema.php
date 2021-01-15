@@ -8,7 +8,6 @@ use DreamFactory\Core\Database\Schema\ColumnSchema;
 use DreamFactory\Core\Database\Schema\TableSchema;
 use DreamFactory\Core\Enums\DbResourceTypes;
 use DreamFactory\Core\SqlDb\Database\Schema\MySqlSchema;
-use DreamFactory\Core\SqlDb\Database\Schema\SqlSchema;
 use Illuminate\Support\Facades\DB;
 
 class HiveSchema extends MySqlSchema
@@ -56,16 +55,12 @@ class HiveSchema extends MySqlSchema
 
     public function getSchemas()
     {
-        return [
-            'default',
-            'table_name2',
-            'table_name3',
-            'table_name4',
-            'table_name5',
-            'table_name6',
-            'table_name7',
-            'table_name8',
-        ];
+        $databases = $this->connection->select(DB::raw('SHOW DATABASES'));
+        $result = [];
+        foreach ($databases as $row) {
+            $result[] = $row['database_name'];
+        }
+        return $result;
     }
 
     protected function loadTableColumns(TableSchema $table)

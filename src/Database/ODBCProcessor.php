@@ -33,4 +33,21 @@ class ODBCProcessor extends Processor
     public function getLastInsertId(Builder $query, $sequence = null){
         return $query->getConnection()->getPdo()->lastInsertId();
     }
+
+    public function processSelect(Builder $query, $results)
+    {
+        $processSelect = parent::processSelect($query, $results);
+        return $this->removeTableNameFromColumn($query, $processSelect);
+    }
+
+    protected function removeTableNameFromColumn(Builder $query, $results) {
+        foreach ($results as &$row) {
+            foreach ($row as $columnName => $columnValue) {
+                unset($row[$columnName]);
+                $row[preg_replace("/{$query->from}\./", '', $columnName)] = $columnValue;
+            }
+        }
+        return $results;
+    }
+
 }

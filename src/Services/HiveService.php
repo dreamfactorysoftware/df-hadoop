@@ -4,7 +4,6 @@ namespace DreamFactory\Core\Hadoop\Services;
 
 use DreamFactory\Core\Hadoop\Resources\HiveTable;
 use DreamFactory\Core\SqlDb\Services\SqlDb;
-use Illuminate\Support\Facades\Config;
 
 /**
  * Class PostgreSqlDb
@@ -32,7 +31,7 @@ class HiveService extends SqlDb
     {
         $handlers = parent::getResourceHandlers();
 
-//        unset($handlers['_schema']);
+        unset($handlers['_schema']);
 
         $handlers[HiveTable::RESOURCE_NAME] = [
             'name'       => HiveTable::RESOURCE_NAME,

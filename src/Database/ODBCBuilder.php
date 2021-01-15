@@ -2,22 +2,16 @@
 
 namespace DreamFactory\Core\Hadoop\Database;
 
-use DreamFactory\Core\Models\BaseModel;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Arr;
 
 class ODBCBuilder extends Builder
 {
-    /**
-     * @var BaseModel
-     */
-    private $model;
 
     public function __construct($connection,
                                 $grammar = null,
-                                $processor = null,
-                                $model = null)
+                                $processor = null)
     {
-        $this->model = $model;
         return parent::__construct($connection, $grammar, $processor);
     }
 
@@ -32,23 +26,19 @@ class ODBCBuilder extends Builder
         list($value, $operator) = $this->prepareValueAndOperator(
             $value, $operator, func_num_args() == 2
         );
-        $value = $this->getModel()->wrapAttribute($column, $value);
         return parent::where($column, $operator, $value, $boolean);
     }
 
-    /**
-     * @return BaseModel
-     */
-    public function getModel(): BaseModel
+    public function get($columns = ['*'])
     {
-        return $this->model;
+        return collect($this->onceWithColumns(Arr::wrap($columns), function () {
+            return $this->processor->processSelect($this, $this->runSelect());
+        }));
     }
 
-    /**
-     * @param BaseModel $model
-     */
-    public function setModel(BaseModel $model): void
+
+    public function skip($value)
     {
-        $this->model = $model;
+        return $value == 0 ? $this : $this->offset($value);
     }
 }

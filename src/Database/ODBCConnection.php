@@ -21,13 +21,17 @@ class ODBCConnection extends Connection
         return parent::getDefaultSchemaGrammar();
     }
 
+    public function query()
+    {
+        return new ODBCBuilder($this, $this->getQueryGrammar(), $this->getPostProcessor());
+    }
+
+
     /**
      * Get the default post processor instance.
      *
      * @return ODBCProcessor
      */
-
-
     protected function getDefaultPostProcessor()
     {
         $processor = $this->getConfig('options.processor');
@@ -36,4 +40,5 @@ class ODBCConnection extends Connection
         }
         return new ODBCProcessor;
     }
+
 }

@@ -3,7 +3,6 @@
 namespace DreamFactory\Core\Hadoop\Database;
 
 use Exception;
-use Illuminate\Support\Facades\Log;
 use PDO;
 
 class ODBCPdo extends PDO

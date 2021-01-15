@@ -12,6 +12,8 @@ class ODBCPdoStatement extends PDOStatement
 
     public function __construct($conn, $query)
     {
+        // Replace named parameters with ?. For example, for query SELECT * FROM t WHERE id = :id, result will be
+        // SELECT * FROM t WHERE id = ?. ":id" replaced with "?".
         $this->query = preg_replace('/(?<=\s|^):[^\s:]++/um', '?', $query);
 
         $this->params = $this->getParamsFromQuery($query);
