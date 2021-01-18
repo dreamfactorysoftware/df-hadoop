@@ -117,7 +117,7 @@ class HDFileSystem extends RemoteFileSystem
                 throw new DfException('Fail to create container. Container already exists', 400);
             }
         }
-        return json_decode($this->webHDFSClient->mkdirs($container));
+        return json_decode($this->webHDFSClient->mkdirs($path));
     }
 
     /**
