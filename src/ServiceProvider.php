@@ -62,7 +62,7 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
                     'name' => 'apache_hive',
                     'label' => 'Apache Hive',
                     'description' => 'The Apache Hive data warehouse software facilitates reading, writing, and managing large datasets residing in distributed storage using SQL',
-                    'group' => ServiceTypeGroups::DATABASE,
+                    'group' => 'Big Data',
                     'subscription_required' => LicenseLevel::GOLD,
                     'config_handler' => HiveConfig::class,
                     'factory' => function ($config) {
