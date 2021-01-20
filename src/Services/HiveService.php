@@ -31,8 +31,6 @@ class HiveService extends SqlDb
     {
         $handlers = parent::getResourceHandlers();
 
-        unset($handlers['_schema']);
-
         $handlers[HiveTable::RESOURCE_NAME] = [
             'name'       => HiveTable::RESOURCE_NAME,
             'class_name' => HiveTable::class,
