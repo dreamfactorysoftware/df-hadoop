@@ -109,4 +109,23 @@ class HiveConfig extends BaseSqlDbConfig
                 break;
         }
     }
+
+    /** {@inheritdoc} */
+    public static function getConfigSchema()
+    {
+        $schema = parent::getConfigSchema();
+        $cacheTtl = array_pop($schema);
+        $cacheEnabled = array_pop($schema);
+        $maxRecords = array_pop($schema);
+        $upserts = array_pop($schema);
+        array_pop($schema);                 // Remove statement
+        array_pop($schema);                 // Remove attributes
+        array_pop($schema);                 // Remove options
+        array_push($schema, $upserts);      // Restore upsert
+        array_push($schema, $maxRecords);   // Restore max_records
+        array_push($schema, $cacheEnabled); // Restore cache enabled
+        array_push($schema, $cacheTtl);     // Restore cache TTL
+
+        return $schema;
+    }
 }
