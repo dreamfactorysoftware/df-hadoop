@@ -27,16 +27,60 @@ class HiveService extends SqlDb
         parent::adaptConfig($config);
     }
 
+    // Hide _schema endpoints and related parameter
+    public function getApiDocInfo()
+    {
+        $base = parent::getApiDocInfo();
+        $paths = (array)array_get($base, 'paths');
+        foreach ($paths as $path_key => $path) {
+            if (strpos($path_key, '_schema') !== false) {
+                unset($paths[$path_key]);
+                continue;
+            }
+
+            $paths[$path_key] = $this->removeNotGetPaths($path);
+        }
+        $base['paths'] = $paths;
+        return $base;
+    }
+
     public function getResourceHandlers()
     {
         $handlers = parent::getResourceHandlers();
 
         $handlers[HiveTable::RESOURCE_NAME] = [
-            'name'       => HiveTable::RESOURCE_NAME,
+            'name' => HiveTable::RESOURCE_NAME,
             'class_name' => HiveTable::class,
-            'label'      => 'Table',
+            'label' => 'Table',
         ];
 
         return $handlers;
+    }
+
+    private function removeRelatedParameter($parameters)
+    {
+        foreach ($parameters as $parameter_key => $parameter) {
+            if ($parameter['name'] === 'related') {
+                unset($parameters[$parameter_key]);
+                continue;
+            }
+        }
+        $parameters = array_values($parameters);
+        return $parameters;
+    }
+
+    private function removeNotGetPaths($path)
+    {
+        foreach ($path as $resource_key => $resource) {
+            if ($resource_key === 'post' || $resource_key === 'patch' || $resource_key === 'put' || $resource_key === 'delete') {
+                unset($path[$resource_key]);
+                continue;
+            }
+
+            if (isset($resource['parameters'])) {
+                $path[$resource_key]['parameters'] = $this->removeRelatedParameter($resource['parameters']);
+            }
+        }
+        return $path;
     }
 }
