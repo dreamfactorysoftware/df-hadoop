@@ -3,6 +3,7 @@
 namespace DreamFactory\Core\Hadoop\Database;
 
 use Exception;
+use DreamFactory\Core\Exceptions\InternalServerErrorException;
 use PDO;
 
 class ODBCPdo extends PDO
@@ -11,7 +12,11 @@ class ODBCPdo extends PDO
 
     public function __construct($dsn, $username, $passwd, $options = [])
     {
-        $this->setConnection(odbc_connect($dsn, $username, $passwd));
+        if (!function_exists('odbc_connect')){
+            throw new InternalServerErrorException('could not find driver');
+        } else {
+            $this->setConnection(odbc_connect($dsn, $username, $passwd));
+        }
     }
 
     public function exec($query)
