@@ -4,6 +4,7 @@ namespace DreamFactory\Core\Hadoop\Models;
 
 use DreamFactory\Core\Exceptions\BadRequestException;
 use DreamFactory\Core\SqlDb\Models\BaseSqlDbConfig;
+use Illuminate\Support\Arr;
 
 /**
  * Write your model
@@ -64,7 +65,7 @@ class HiveConfig extends BaseSqlDbConfig
     public function validate($data, $throwException = true)
     {
         $connection = $this->getAttribute('connection');
-        if (empty(array_get($connection, 'host')) || empty(array_get($connection, 'database'))) {
+        if (empty(Arr::get($connection, 'host')) || empty(Arr::get($connection, 'database'))) {
             throw new BadRequestException("Database connection information must contain at least host and database name.");
         }
 

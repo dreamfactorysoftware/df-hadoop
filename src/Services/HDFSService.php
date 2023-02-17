@@ -3,6 +3,7 @@
 use DreamFactory\Core\Exceptions\InternalServerErrorException;
 use DreamFactory\Core\File\Services\RemoteFileService;
 use DreamFactory\Core\Hadoop\Components\HDFileSystem;
+use Illuminate\Support\Arr;
 
 class HDFSService extends RemoteFileService
 {
@@ -13,7 +14,7 @@ class HDFSService extends RemoteFileService
      */
     protected function setDriver($config)
     {
-        $this->container = array_get($config, 'container');
+        $this->container = Arr::get($config, 'container');
 
         if (empty($this->container)) {
             throw new InternalServerErrorException('File service container not specified. Please check configuration for file service - ' .

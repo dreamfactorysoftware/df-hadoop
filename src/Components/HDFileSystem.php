@@ -302,32 +302,16 @@ class HDFileSystem extends RemoteFileSystem
     /**
      * {@inheritDoc}
      */
-    public function streamBlob($container, $name, $params = [])
+    protected function getBlobInChunks($container, $name, $chunkSize): \Generator
     {
         $path = HDFSFileBlobTools::getPath($container, $name);
         $fileStatus = json_decode($this->webHDFSClient->getFileStatus($path));
         if (isset($fileStatus->FileStatus)) {
-            if ($fileStatus->FileStatus->type === 'DIRECTORY') {
-                header("HTTP/1.1 302");
-                header("Content-Type: text/html");
-                header("Location: $_SERVER[REQUEST_URI]/");
-            } else {
-                $disposition =
-                    (isset($params['disposition']) && !empty($params['disposition'])) ? $params['disposition'] : 'inline';
-                header('Content-Disposition: ' . $disposition . '; filename="' . $name . '";');
-                header('Last-Modified: ' . gmdate('D, d M Y H:i:s T', $fileStatus->FileStatus->modificationTime));
-                header('Content-Type: text/plain');
-                header('Content-Length: ' . $fileStatus->FileStatus->length);
-
-
-                $fileLength = $fileStatus->FileStatus->length;
-                $chunk = \Config::get('df.file_chunk_size');
-                for ($offset = 0; $offset < $fileLength; $offset += $chunk) {
-                    echo $this->webHDFSClient->open($path, $offset, $chunk);
-                }
+            $fileLength = $fileStatus->FileStatus->length;
+            for ($offset = 0; $offset < $fileLength; $offset += $chunkSize) {
+                yield $this->webHDFSClient->open($path, $offset, $chunkSize);
             }
         }
-
     }
 
     /**

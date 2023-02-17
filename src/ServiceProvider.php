@@ -32,10 +32,10 @@ class ServiceProvider extends \Illuminate\Support\ServiceProvider
             /** @var DatabaseManager $db */
             $db->extend('odbc', function ($config, $name) {
                 $pdoConnection = (new ODBCConnector())->connect($config);
-                return new ODBCConnection($pdoConnection, $config['database'], isset($config['prefix']) ? $config['prefix'] : '', $config);
+                return new ODBCConnection($pdoConnection, $config['database'], $config['prefix'] ?? '', $config);
             });
         });
-        $this->app->resolving('db.schema', function ($db) {
+        $this->app->resolving('df.db.schema', function ($db) {
             /** @var DatabaseManager $db */
             $db->extend('odbc', function ($connection) {
                 return new HiveSchema($connection);
