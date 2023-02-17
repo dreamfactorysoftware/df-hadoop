@@ -4,6 +4,7 @@ namespace DreamFactory\Core\Hadoop\Services;
 
 use DreamFactory\Core\Hadoop\Resources\HiveTable;
 use DreamFactory\Core\SqlDb\Services\SqlDb;
+use Illuminate\Support\Arr;
 
 /**
  * Class PostgreSqlDb
@@ -31,9 +32,9 @@ class HiveService extends SqlDb
     public function getApiDocInfo()
     {
         $base = parent::getApiDocInfo();
-        $paths = (array)array_get($base, 'paths');
+        $paths = (array)Arr::get($base, 'paths');
         foreach ($paths as $path_key => $path) {
-            if (strpos($path_key, '_schema') !== false) {
+            if (str_contains($path_key, '_schema')) {
                 unset($paths[$path_key]);
                 continue;
             }

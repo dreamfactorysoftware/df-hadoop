@@ -19,12 +19,12 @@ class ODBCPdo extends PDO
         }
     }
 
-    public function exec($query)
+    public function exec($query): int|false
     {
         return $this->prepare($query)->execute();
     }
 
-    public function prepare($statement, $driver_options = null)
+    public function prepare($statement, $driver_options = null): ODBCPdoStatement
     {
         return new ODBCPdoStatement($this->getConnection(), $statement);
     }
@@ -50,25 +50,25 @@ class ODBCPdo extends PDO
      * @return string|void
      * @throws Exception
      */
-    public function lastInsertId($name = null)
+    public function lastInsertId($name = null): string|false
     {
         throw new Exception("Error, you must override this method!");
     }
 
-    public function commit()
+    public function commit(): bool
     {
         return odbc_commit($this->getConnection());
     }
 
-    public function rollBack()
+    public function rollBack(): bool
     {
         $rollback = odbc_rollback($this->getConnection());
         odbc_autocommit($this->getConnection(), true);
         return $rollback;
     }
 
-    public function beginTransaction()
+    public function beginTransaction(): bool
     {
-        odbc_autocommit($this->getConnection(), false);
+        return odbc_autocommit($this->getConnection(), false);
     }
 }

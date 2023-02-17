@@ -43,17 +43,18 @@ class ODBCPdoStatement extends PDOStatement
         return $params;
     }
 
-    public function rowCount()
+    public function rowCount(): int
     {
         return odbc_num_rows($this->statement);
     }
 
-    public function bindValue($param, $val, $ignore = null)
+    public function bindValue($param, $value, $ignore = null): bool
     {
-        $this->params[$param] = $val;
+        $this->params[$param] = $value;
+        return true;
     }
 
-    public function execute($ignore = null)
+    public function execute($ignore = null): bool
     {
         if ($this->driverIssue) {
             $q = $this->query;
@@ -61,14 +62,15 @@ class ODBCPdoStatement extends PDOStatement
                 $q = preg_replace('/\?/', $this->quote($param), $q);
             }
             $this->statement = odbc_prepare($this->connection, $q);
-            odbc_execute($this->statement, []);
+            return odbc_execute($this->statement, []);
         } else {
-            odbc_execute($this->statement, $this->params);
+            $params = $this->params;
             $this->params = [];
+            return odbc_execute($this->statement, $params);
         }
     }
 
-    public function fetchAll($how = NULL, $class_name = NULL, $ctor_args = NULL)
+    public function fetchAll(int $mode = 0, ...$args): array
     {
         $records = [];
         while ($record = $this->fetch()) {
@@ -90,5 +92,15 @@ class ODBCPdoStatement extends PDOStatement
             return "\"${r}\"";
         }
         return $param;
+    }
+
+    /**
+     * We can do nothing with fetch mode using odbc_ functions. So
+     * we have to mock this method as Laravel uses it, and it should
+     * be defined as we do not using PDO `__construct`.
+     */
+    public function setFetchMode($mode, $className = null, ...$params)
+    {
+     return true;
     }
 }
