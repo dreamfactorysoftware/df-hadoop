@@ -7,16 +7,16 @@ use Illuminate\Database\Query\Grammars\MySqlGrammar;
 
 class ODBCConnection extends Connection
 {
-    function getDefaultQueryGrammar()
+    protected function getDefaultQueryGrammar()
     {
-        return new MySqlGrammar();
+        return new MySqlGrammar($this);
     }
 
-    function getDefaultSchemaGrammar()
+    protected function getDefaultSchemaGrammar()
     {
         $schemaGrammar = $this->getConfig('options.grammar.schema');
         if ($schemaGrammar) {
-            return new $schemaGrammar;
+            return new $schemaGrammar($this);
         }
         return parent::getDefaultSchemaGrammar();
     }
